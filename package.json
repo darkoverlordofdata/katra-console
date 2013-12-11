@@ -1,0 +1,33 @@
+{
+  "name": "katra-console",
+  "version": "0.0.1",
+  "description": "Console/terminal emulator for html5",
+  "keywords": [
+    "console",
+    "coffee-script"
+  ],
+  "author": "bruce davidson <darkoverlordofdata@gmail.com>",
+  "contributors": [
+    {
+      "name": "bruce davidson",
+      "email": "darkoverlordofdata@gmail.com"
+    }
+  ],
+  "dependencies": {
+    "amdefine": ">=0.0.8",
+    "colors": "~0.6.2"
+  },
+  "scripts": {
+  },
+  "bin": {
+  },
+  "devDependencies": {
+  },
+  "repository": "git://github.com/darkoverlordofdata/katra-console",
+  "main": "index",
+  "engines": {
+    "node": ">=0.10.x",
+    "npm": ">=1.2.x"
+  },
+  "license": "MIT"
+}
