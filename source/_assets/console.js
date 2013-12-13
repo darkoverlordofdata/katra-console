@@ -44,84 +44,83 @@
       $container.html("<output></output>\n<div id=\"input-line\" class=\"input-line\">\n<div class=\"prompt\">$&gt;</div><div><input class=\"cmdline\" autofocus /></div>\n</div>");
       _input = $container.find('#input-line .cmdline');
       _output = $container.find('output');
-      $(window).on('click', function(e) {
+      $(window).on('click', function($e) {
         return _input.focus();
       });
-      $(document.body).on('keydown', function(e) {
-        if (e.keyCode === KEY_ESC) {
-          e.stopPropagation();
-          return e.preventDefault();
+      $(document.body).on('keydown', function($e) {
+        if ($e.keyCode === KEY_ESC) {
+          $e.stopPropagation();
+          return $e.preventDefault();
         }
       });
-      _input.on('click', function(e) {
+      _input.on('click', function($e) {
         return this.value = this.value;
       });
-      _input.on('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.keyCode === KEY_S) {
-          $container.toggleClass('flicker');
-          output('<div>Screen flicker: ' + ($container.hasClass('flicker') ? 'on' : 'off') + '</div>');
-          e.preventDefault();
-          return e.stopPropagation();
-        }
-      });
-      _input.on('keyup', function(e) {
+      _input.on('keyup', function($e) {
         var $temp;
         $temp = 0;
         if (_history.length) {
-          if (e.keyCode === KEY_UP || e.keyCode === KEY_DOWN) {
+          if ($e.keyCode === KEY_UP || $e.keyCode === KEY_DOWN) {
             if (_history[_histpos]) {
               _history[_histpos] = this.value;
             } else {
               $temp = this.value;
             }
           }
-          if (e.keyCode === KEY_UP) {
+          if ($e.keyCode === KEY_UP) {
             _histpos--;
             if (_histpos < 0) {
               _histpos = 0;
             }
-          } else if (e.keyCode === KEY_DOWN) {
+          } else if ($e.keyCode === KEY_DOWN) {
             _histpos++;
             if (_histpos > _history.length) {
               _histpos = _history.length;
             }
           }
-          if (e.keyCode === KEY_UP || e.keyCode === KEY_DOWN) {
+          if ($e.keyCode === KEY_UP || $e.keyCode === KEY_DOWN) {
             this.value = _history[_histpos] ? _history[_histpos] : $temp;
             return this.value = this.value;
           }
         }
       });
-      _input.on('keydown', function(e) {
-        var args, cmd, input, line;
-        switch (e.keyCode) {
+      _input.on('keydown', function($e) {
+        if ($e.ctrlKey || $e.metaKey) {
+          switch ($e.keyCode) {
+            case KEY_S:
+              $container.toggleClass('flicker');
+              $e.preventDefault();
+              return $e.stopPropagation();
+          }
+        }
+      });
+      _input.on('keydown', function($e) {
+        var $args, $cmd, $input, $line;
+        switch ($e.keyCode) {
           case KEY_BS:
             if (!this.value) {
 
             }
             break;
           case KEY_TAB:
-            return e.preventDefault;
+            return $e.preventDefault;
           case KEY_CR:
             if (this.value) {
               _history[_history.length] = this.value;
               _histpos = _history.length;
             }
-            line = this.parentNode.parentNode.cloneNode(true);
-            line.removeAttribute('id');
-            line.classList.add('line');
-            input = line.querySelector('input.cmdline');
-            input.autofocus = false;
-            input.readOnly = true;
-            _output.append(line);
+            $line = this.parentNode.parentNode.cloneNode(true);
+            $line.removeAttribute('id');
+            $line.classList.add('line');
+            $input = $line.querySelector('input.cmdline');
+            $input.autofocus = false;
+            $input.readOnly = true;
+            _output.append($line);
             if (this.value && this.value.trim()) {
-              args = this.value.split(' ').filter(function(val, i) {
-                return val;
-              });
-              cmd = args[0].toLowerCase();
-              args = args.splice(1);
+              $args = this.value.split(' ');
+              $cmd = $args.shift().toLowerCase();
             }
-            output(cmd);
+            output($cmd);
             return this.value = '';
         }
       });
