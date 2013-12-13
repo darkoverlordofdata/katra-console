@@ -51,6 +51,14 @@ do ($ = jQuery, window, document) ->
     _history    = []    # the history list
     _input      = null  # the input element
     _output     = null  # the output element
+    _prompt     = null  # the prompt element
+    _default    =
+      autofocus : true  # autofocus the console
+      history   : true  # allow history (up/down keys)
+      welcome   : ''    # inital message to display
+      prompt    : '> '  # standard prompt
+      promptAlt : '? '  # alternate prompt
+      handle    : ->    # callback to handle input
 
     #
     # Print string to output
@@ -71,17 +79,23 @@ do ($ = jQuery, window, document) ->
     #
     constructor: ($container, $options) ->
 
+      $options = $.extend(_default, $options)
+      $auto = if $options.autofocus then 'autofocus' else ''
       #
       # render the ui
       #
       $container.html """
           <output></output>
           <div id="input-line" class="input-line">
-          <div class="prompt">$&gt;</div><div><input class="cmdline" autofocus /></div>
+          <div class="prompt"></div><div><input class="cmdline" #{$auto} /></div>
           </div>
         """
-      _input = $container.find('#input-line .cmdline')
       _output = $container.find('output')
+      _prompt = $container.find('#input-line .prompt')
+      _input = $container.find('#input-line .cmdline')
+
+      _prompt.text $options.prompt
+      output "<div>#{$options.welcome}</div>"
 
       #
       # pass the focus to input
@@ -108,7 +122,8 @@ do ($ = jQuery, window, document) ->
       #
       _input.on 'keyup', ($e) ->
 
-        $temp   = 0
+        return unless $options.history
+        $temp = 0
 
         if _history.length
           if $e.keyCode is KEY_UP or $e.keyCode is KEY_DOWN
@@ -174,21 +189,20 @@ do ($ = jQuery, window, document) ->
             $input.readOnly = true
             _output.append $line
 
-            # Parse out command, args, and trim off whitespac$e.
             if (@value and @value.trim())
-              $args = @value.split(' ')
-              $cmd = $args.shift().toLowerCase()
-              #$args = $args.splice(1) # Remove cmd from arg list.
-
-            output $cmd
+              $options.handle @value
             @value = '' # Clear/setup line for next input.
 
 
-      output "<div>#{$options.welcome}</div>"
 
     clear: ($input) ->
       _output.html ''
       $input.value = ''
 
+    prompt: ($prompt=0) ->
+      if $prompt is 0
+        _prompt.text $options.prompt
+      else
+        _prompt.text $options.promptAlt
 
 

@@ -9,7 +9,7 @@
     return (_ref = $.data(this, 'console')) != null ? _ref : $.data(this, 'console', new Console(this, $options));
   };
   return Console = (function() {
-    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_S, KEY_TAB, KEY_UP, output, _history, _histpos, _input, _output;
+    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_S, KEY_TAB, KEY_UP, output, _default, _history, _histpos, _input, _output, _prompt;
 
     KEY_BS = 8;
 
@@ -35,15 +35,32 @@
 
     _output = null;
 
+    _prompt = null;
+
+    _default = {
+      autofocus: true,
+      history: true,
+      welcome: '',
+      prompt: '> ',
+      promptAlt: '? ',
+      handle: function() {}
+    };
+
     output = function(html) {
       _output.append(html);
       return _input.get(0).scrollIntoView();
     };
 
     function Console($container, $options) {
-      $container.html("<output></output>\n<div id=\"input-line\" class=\"input-line\">\n<div class=\"prompt\">$&gt;</div><div><input class=\"cmdline\" autofocus /></div>\n</div>");
-      _input = $container.find('#input-line .cmdline');
+      var $auto;
+      $options = $.extend(_default, $options);
+      $auto = $options.autofocus ? 'autofocus' : '';
+      $container.html("<output></output>\n<div id=\"input-line\" class=\"input-line\">\n<div class=\"prompt\"></div><div><input class=\"cmdline\" " + $auto + " /></div>\n</div>");
       _output = $container.find('output');
+      _prompt = $container.find('#input-line .prompt');
+      _input = $container.find('#input-line .cmdline');
+      _prompt.text($options.prompt);
+      output("<div>" + $options.welcome + "</div>");
       $(window).on('click', function($e) {
         return _input.focus();
       });
@@ -95,7 +112,7 @@
         }
       });
       _input.on('keydown', function($e) {
-        var $args, $cmd, $input, $line;
+        var $input, $line;
         switch ($e.keyCode) {
           case KEY_BS:
             if (!this.value) {
@@ -117,19 +134,27 @@
             $input.readOnly = true;
             _output.append($line);
             if (this.value && this.value.trim()) {
-              $args = this.value.split(' ');
-              $cmd = $args.shift().toLowerCase();
+              $options.handle(this.value);
             }
-            output($cmd);
             return this.value = '';
         }
       });
-      output("<div>" + $options.welcome + "</div>");
     }
 
     Console.prototype.clear = function($input) {
       _output.html('');
       return $input.value = '';
+    };
+
+    Console.prototype.prompt = function($prompt) {
+      if ($prompt == null) {
+        $prompt = 0;
+      }
+      if ($prompt === 0) {
+        return _prompt.text($options.prompt);
+      } else {
+        return _prompt.text($options.promptAlt);
+      }
     };
 
     return Console;
