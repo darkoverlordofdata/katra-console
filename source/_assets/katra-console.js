@@ -9,7 +9,7 @@
     return (_ref = $.data(this, 'console')) != null ? _ref : $.data(this, 'console', new Console(this, $options));
   };
   return Console = (function() {
-    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_S, KEY_TAB, KEY_UP;
+    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_S, KEY_TAB, KEY_UP, output, _default, _history, _histpos, _input, _output, _prompt;
 
     KEY_BS = 8;
 
@@ -27,17 +27,17 @@
 
     KEY_S = 83;
 
-    Console.prototype.histpos = 0;
+    _histpos = 0;
 
-    Console.prototype.history = null;
+    _history = [];
 
-    Console.prototype.input = null;
+    _input = null;
 
-    Console.prototype.output = null;
+    _output = null;
 
-    Console.prototype.prompt = null;
+    _prompt = null;
 
-    Console.prototype["default"] = {
+    _default = {
       autofocus: true,
       history: true,
       welcome: '',
@@ -46,20 +46,24 @@
       handle: function() {}
     };
 
+    output = function(html) {
+      _output.append(html);
+      return _input.get(0).scrollIntoView();
+    };
+
     function Console($container, $options) {
       var $auto, $this;
       $this = this;
-      $this.history = [];
-      $options = $.extend(this["default"], $options);
+      $options = $.extend(_default, $options);
       $auto = $options.autofocus ? 'autofocus' : '';
       $container.html("<output></output>\n<div id=\"input-line\" class=\"input-line\">\n<div class=\"prompt\"></div><div><input class=\"cmdline\" " + $auto + " /></div>\n</div>");
-      this.output = $container.find('output');
-      this.prompt = $container.find('#input-line .prompt');
-      this.input = $container.find('#input-line .cmdline');
-      this.prompt.text($options.prompt);
-      this.print("<div>" + $options.welcome + "</div>");
+      _output = $container.find('output');
+      _prompt = $container.find('#input-line .prompt');
+      _input = $container.find('#input-line .cmdline');
+      _prompt.text($options.prompt);
+      output("<div>" + $options.welcome + "</div>");
       $(window).on('click', function($e) {
-        return $this.input.focus();
+        return _input.focus();
       });
       $(document.body).on('keydown', function($e) {
         if ($e.keyCode === KEY_ESC) {
@@ -68,41 +72,41 @@
           return $e.preventDefault();
         }
       });
-      this.input.on('click', function($e) {
+      _input.on('click', function($e) {
         return this.value = this.value;
       });
-      this.input.on('keyup', function($e) {
+      _input.on('keyup', function($e) {
         var $temp;
         if (!$options.history) {
           return;
         }
         $temp = 0;
-        if ($this.history.length) {
+        if (_history.length) {
           if ($e.keyCode === KEY_UP || $e.keyCode === KEY_DOWN) {
-            if ($this.history[$this.histpos]) {
-              $this.history[$this.histpos] = this.value;
+            if (_history[_histpos]) {
+              _history[_histpos] = this.value;
             } else {
               $temp = this.value;
             }
           }
           if ($e.keyCode === KEY_UP) {
-            $this.histpos--;
-            if ($this.histpos < 0) {
-              $this.histpos = 0;
+            _histpos--;
+            if (_histpos < 0) {
+              _histpos = 0;
             }
           } else if ($e.keyCode === KEY_DOWN) {
-            $this.histpos++;
-            if ($this.histpos > $this.history.length) {
-              $this.histpos = $this.history.length;
+            _histpos++;
+            if (_histpos > _history.length) {
+              _histpos = _history.length;
             }
           }
           if ($e.keyCode === KEY_UP || $e.keyCode === KEY_DOWN) {
-            this.value = $this.history[$this.histpos] ? $this.history[$this.histpos] : $temp;
+            this.value = _history[_histpos] ? _history[_histpos] : $temp;
             return this.value = this.value;
           }
         }
       });
-      this.input.on('keydown', function($e) {
+      _input.on('keydown', function($e) {
         if ($e.ctrlKey || $e.metaKey) {
           switch ($e.keyCode) {
             case KEY_S:
@@ -112,7 +116,7 @@
           }
         }
       });
-      this.input.on('keydown', function($e) {
+      _input.on('keydown', function($e) {
         var $input, $line;
         switch ($e.keyCode) {
           case KEY_BS:
@@ -124,8 +128,8 @@
             return $e.preventDefault;
           case KEY_CR:
             if (this.value) {
-              $this.history[$this.history.length] = this.value;
-              $this.histpos = $this.history.length;
+              _history[_history.length] = this.value;
+              _histpos = _history.length;
             }
             $line = this.parentNode.parentNode.cloneNode(true);
             $line.removeAttribute('id');
@@ -133,7 +137,7 @@
             $input = $line.querySelector('input.cmdline');
             $input.autofocus = false;
             $input.readOnly = true;
-            $this.output.append($line);
+            _output.append($line);
             if (this.value && this.value.trim()) {
               $options.handle(this.value);
             }
@@ -143,7 +147,7 @@
     }
 
     Console.prototype.clear = function($input) {
-      this.output.html('');
+      _output.html('');
       return $input.value = '';
     };
 
@@ -152,18 +156,10 @@
         $prompt = 0;
       }
       if ($prompt === 0) {
-        return this.prompt.text($options.prompt);
+        return _prompt.text($options.prompt);
       } else {
-        return this.prompt.text($options.promptAlt);
+        return _prompt.text($options.promptAlt);
       }
-    };
-
-    Console.prototype.print = function(html) {
-      if (html == null) {
-        html = '';
-      }
-      this.output.append(html);
-      return this.input.get(0).scrollIntoView();
     };
 
     return Console;

@@ -47,18 +47,28 @@ do ($ = jQuery, window, document) ->
     KEY_C       = 67    # 'C'
     KEY_S       = 83    # 'S'
 
-    histpos     : 0     # current place in the history list
-    history     : null  # the history list
-    input       : null  # the input element
-    output      : null  # the output element
-    prompt      : null  # the prompt element
-    default     :
+    _histpos    = 0     # current place in the history list
+    _history    = []    # the history list
+    _input      = null  # the input element
+    _output     = null  # the output element
+    _prompt     = null  # the prompt element
+    _default    =
       autofocus : true  # autofocus the console
       history   : true  # allow history (up/down keys)
       welcome   : ''    # inital message to display
       prompt    : '> '  # standard prompt
       promptAlt : '? '  # alternate prompt
       handle    : ->    # callback to handle input
+
+    #
+    # Print string to output
+    #
+    # @param  [String]  html string
+    # @return [Void]
+    #
+    output = (html) ->
+      _output.append html
+      _input.get(0).scrollIntoView()
 
     #
     # Create a new console
@@ -70,8 +80,7 @@ do ($ = jQuery, window, document) ->
     constructor: ($container, $options) ->
 
       $this = @
-      $this.history = []
-      $options = $.extend(@default, $options)
+      $options = $.extend(_default, $options)
       $auto = if $options.autofocus then 'autofocus' else ''
       #
       # render the ui
@@ -82,20 +91,18 @@ do ($ = jQuery, window, document) ->
           <div class="prompt"></div><div><input class="cmdline" #{$auto} /></div>
           </div>
         """
-      @output = $container.find('output')
-      @prompt = $container.find('#input-line .prompt')
-      @input = $container.find('#input-line .cmdline')
+      _output = $container.find('output')
+      _prompt = $container.find('#input-line .prompt')
+      _input = $container.find('#input-line .cmdline')
 
-      @prompt.text $options.prompt
-
-
-      @print "<div>#{$options.welcome}</div>"
+      _prompt.text $options.prompt
+      output "<div>#{$options.welcome}</div>"
 
       #
       # pass the focus to input
       #
       $(window).on 'click', ($e) ->
-        $this.input.focus()
+        _input.focus()
 
       #
       # check for interrupt
@@ -109,43 +116,43 @@ do ($ = jQuery, window, document) ->
       #
       # input onclick
       #
-      @input.on 'click', ($e) ->
+      _input.on 'click', ($e) ->
         @value = @value # Sets cursor to end of input.
 
       #
       # history (up/down)
       #
-      @input.on 'keyup', ($e) ->
+      _input.on 'keyup', ($e) ->
 
         return unless $options.history
         $temp = 0
 
-        if $this.history.length
+        if _history.length
           if $e.keyCode is KEY_UP or $e.keyCode is KEY_DOWN
-            if $this.history[$this.histpos]
-              $this.history[$this.histpos] = @value
+            if _history[_histpos]
+              _history[_histpos] = @value
             else
               $temp = @value
 
           if $e.keyCode is KEY_UP
-            $this.histpos--
-            if $this.histpos < 0
-              $this.histpos = 0
+            _histpos--
+            if _histpos < 0
+              _histpos = 0
 
           else if $e.keyCode is KEY_DOWN
-            $this.histpos++
-            if $this.histpos > $this.history.length
-              $this.histpos = $this.history.length
+            _histpos++
+            if _histpos > _history.length
+              _histpos = _history.length
 
           if $e.keyCode is KEY_UP or $e.keyCode is KEY_DOWN
-            @value = if $this.history[$this.histpos] then $this.history[$this.histpos] else $temp
+            @value = if _history[_histpos] then _history[_histpos] else $temp
             @value = @value # Sets cursor to end of input.
 
 
       #
       # ctrl/key
       #
-      @input.on 'keydown',  ($e) ->
+      _input.on 'keydown',  ($e) ->
 
         if ($e.ctrlKey or $e.metaKey)
           switch $e.keyCode
@@ -160,7 +167,7 @@ do ($ = jQuery, window, document) ->
       #
       # Enter
       #
-      @input.on 'keydown', ($e) ->
+      _input.on 'keydown', ($e) ->
 
         switch $e.keyCode
 
@@ -172,8 +179,8 @@ do ($ = jQuery, window, document) ->
 
           when KEY_CR
             if @value
-              $this.history[$this.history.length] = @value
-              $this.histpos = $this.history.length
+              _history[_history.length] = @value
+              _histpos = _history.length
 
             # Duplicate current input and append to output section.
             $line = @parentNode.parentNode.cloneNode(true)
@@ -182,7 +189,7 @@ do ($ = jQuery, window, document) ->
             $input = $line.querySelector('input.cmdline')
             $input.autofocus = false
             $input.readOnly = true
-            $this.output.append $line
+            _output.append $line
 
             if (@value and @value.trim())
               $options.handle @value
@@ -197,7 +204,7 @@ do ($ = jQuery, window, document) ->
     # @return [Void]
     #
     clear: ($input) ->
-      @output.html ''
+      _output.html ''
       $input.value = ''
 
     #
@@ -208,18 +215,8 @@ do ($ = jQuery, window, document) ->
     #
     prompt: ($prompt=0) ->
       if $prompt is 0
-        @prompt.text $options.prompt
+        _prompt.text $options.prompt
       else
-        @prompt.text $options.promptAlt
-
-    #
-    # Print string to output
-    #
-    # @param  [String]  html string
-    # @return [Void]
-    #
-    print: (html='') ->
-      @output.append html
-      @input.get(0).scrollIntoView()
+        _prompt.text $options.promptAlt
 
 
