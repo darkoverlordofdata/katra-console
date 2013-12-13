@@ -22,12 +22,12 @@ util = require 'util'
 # Build from a context free grammar (BNF)
 #
 #
-task 'build', 'Build project code', ->
+task 'build:src', 'Build project code', ->
 
   #
   # Build the AST lib
   #
-  exec 'coffee -o lib -c src', ($err, $stdout, $stderr) ->
+  exec 'coffee -b -o source/_assets -c src', ($err, $stdout, $stderr) ->
 
     util.log $err if $err if $err?
     util.log $stderr if $stderr if $stderr?

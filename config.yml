@@ -1,0 +1,23 @@
+name: "console"
+description: "Katra Console test site"
+
+source: ./source
+destination: ../gh-pages
+
+url: http://darkoverlordofdata/katra-console
+
+plugins:
+  - huginn-asset-bundler
+
+asset_bundler:
+  compress:
+    js: true
+    css: true
+  base_path: /assets/
+  shim: /katra-console
+  server_url: //cdn.darkoverlordofdata.com/
+  remove_bundled: false
+  dev: false
+  markup_templates:
+    js: "<script type='text/javascript' src='{{url}}'></script>\n"
+    css: "<link rel='stylesheet' type='text/css' href='{{url}}' />\n"
