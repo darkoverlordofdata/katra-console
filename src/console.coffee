@@ -45,7 +45,10 @@ do ($ = jQuery, window, document) ->
     KEY_UP      = 38    # Up Arrow
     KEY_DOWN    = 40    # Down Arrow
     KEY_C       = 67    # 'C'
+    KEY_R       = 82    # 'R'
     KEY_S       = 83    # 'S'
+
+    fix = ($text) -> $text.replace(/\n/g, "<br />")
 
     histpos     : 0     # current place in the history list
     history     : null  # the history list
@@ -59,6 +62,7 @@ do ($ = jQuery, window, document) ->
       prompt    : '> '  # standard prompt
       promptAlt : '? '  # alternate prompt
       handle    : ->    # callback to handle input
+      break     : ->    # ctrl/c interrupt
 
     #
     # Create a new console
@@ -87,8 +91,6 @@ do ($ = jQuery, window, document) ->
       @input = $container.find('#input-line .cmdline')
 
       @prompt.text $options.prompt
-
-
       @print "<div>#{$options.welcome}</div>"
 
       #
@@ -103,7 +105,6 @@ do ($ = jQuery, window, document) ->
       $(document.body).on 'keydown', ($e) ->
         if $e.keyCode is KEY_ESC 
           $e.stopPropagation()
-          $this.clear @
           $e.preventDefault()
 
       #
@@ -150,7 +151,15 @@ do ($ = jQuery, window, document) ->
         if ($e.ctrlKey or $e.metaKey)
           switch $e.keyCode
 
-            #when KEY_C
+            when KEY_C  # CTRL/C - break
+              $options.break @
+              $e.preventDefault()
+              $e.stopPropagation()
+
+            when KEY_R  # CTRL/R - reset
+              $this.clear @
+              $e.preventDefault()
+              $e.stopPropagation()
 
             when KEY_S
               $container.toggleClass('flicker')
@@ -218,8 +227,21 @@ do ($ = jQuery, window, document) ->
     # @param  [String]  html string
     # @return [Void]
     #
-    print: (html='') ->
-      @output.append html
+    print: ($text='') ->
+      @output.append fix($text)
       @input.get(0).scrollIntoView()
 
+    #
+    # Print string to output
+    #
+    # @param  [String]  html string
+    # @return [Void]
+    #
+    println: ($text='') ->
+      @print "#{$text}\n"
 
+    debug: ($text) ->
+      @println "<span style=\"color: blue;\">#{$text}</span>"
+
+    highlight: ($text) ->
+      @println "<span style=\"color: yellow;\">#{$text}</span>"

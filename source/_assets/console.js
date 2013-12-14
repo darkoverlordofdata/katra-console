@@ -9,7 +9,7 @@
     return (_ref = $.data(this, 'console')) != null ? _ref : $.data(this, 'console', new Console(this, $options));
   };
   return Console = (function() {
-    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_S, KEY_TAB, KEY_UP;
+    var KEY_BS, KEY_C, KEY_CR, KEY_DOWN, KEY_ESC, KEY_R, KEY_S, KEY_TAB, KEY_UP, fix;
 
     KEY_BS = 8;
 
@@ -25,7 +25,13 @@
 
     KEY_C = 67;
 
+    KEY_R = 82;
+
     KEY_S = 83;
+
+    fix = function($text) {
+      return $text.replace(/\n/g, "<br />");
+    };
 
     Console.prototype.histpos = 0;
 
@@ -43,7 +49,8 @@
       welcome: '',
       prompt: '> ',
       promptAlt: '? ',
-      handle: function() {}
+      handle: function() {},
+      "break": function() {}
     };
 
     function Console($container, $options) {
@@ -64,7 +71,6 @@
       $(document.body).on('keydown', function($e) {
         if ($e.keyCode === KEY_ESC) {
           $e.stopPropagation();
-          $this.clear(this);
           return $e.preventDefault();
         }
       });
@@ -105,6 +111,13 @@
       this.input.on('keydown', function($e) {
         if ($e.ctrlKey || $e.metaKey) {
           switch ($e.keyCode) {
+            case KEY_C:
+              $e.preventDefault();
+              return $e.stopPropagation();
+            case KEY_R:
+              $this.clear(this);
+              $e.preventDefault();
+              return $e.stopPropagation();
             case KEY_S:
               $container.toggleClass('flicker');
               $e.preventDefault();
@@ -158,12 +171,32 @@
       }
     };
 
-    Console.prototype.print = function(html) {
-      if (html == null) {
-        html = '';
+    Console.prototype.print = function($text) {
+      if ($text == null) {
+        $text = '';
       }
-      this.output.append(html);
+      this.output.append(fix($text));
       return this.input.get(0).scrollIntoView();
+    };
+
+    Console.prototype.println = function($text) {
+      if ($text == null) {
+        $text = '';
+      }
+      return this.print("" + $text + "\n");
+    };
+
+    Console.prototype.debug = function($text) {
+      console.log($($text).css({
+        color: 'blue'
+      }).html());
+      return this.println($($text).css({
+        color: 'blue'
+      }).html());
+    };
+
+    Console.prototype.highlight = function($text) {
+      return this.println("<span style=\"color: yellow;\">" + $text + "</span>");
     };
 
     return Console;
