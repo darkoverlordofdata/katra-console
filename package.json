@@ -17,12 +17,9 @@
     "amdefine": ">=0.0.8",
     "colors": "~0.6.2"
   },
-  "scripts": {
-  },
-  "bin": {
-  },
-  "devDependencies": {
-  },
+  "scripts": {},
+  "bin": {},
+  "devDependencies": {},
   "repository": "git://github.com/darkoverlordofdata/katra-console",
   "main": "index",
   "engines": {

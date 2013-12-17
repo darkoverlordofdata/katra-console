@@ -1,5 +1,5 @@
 #+--------------------------------------------------------------------+
-#| consol$e.coffee
+#| katra.console.coffee
 #+--------------------------------------------------------------------+
 #| Copyright DarkOverlordOfData (c) 2013
 #+--------------------------------------------------------------------+
@@ -14,14 +14,6 @@
 # jQuery console plugin
 #
 
-#
-# Define a plugin
-#
-# @param  [Object]  jQuery
-# @param  [object]  window
-# @param  [object]  document
-# @return [Void]
-#
 do ($ = jQuery, window, document) ->
 
 
@@ -48,11 +40,11 @@ do ($ = jQuery, window, document) ->
     KEY_R       = 82    # 'R'
     KEY_S       = 83    # 'S'
 
-    fix = ($text) -> $text.replace(/\n/g, "<br />")
+    fix = ($text) -> $text.replace(/\ /g, "&nbsp;").replace(/\n/g, "<br />")
 
     histpos     : 0     # current place in the history list
     history     : null  # the history list
-    input       : null  # the input element
+    kb          : null  # the kb element
     output      : null  # the output element
     prompt      : null  # the prompt element
     default     :
@@ -61,8 +53,8 @@ do ($ = jQuery, window, document) ->
       welcome   : ''    # inital message to display
       prompt    : '> '  # standard prompt
       promptAlt : '? '  # alternate prompt
-      handle    : ->    # callback to handle input
-      break     : ->    # ctrl/c interrupt
+      commandHandle: -> # callback to handle kb input
+      cancelHandle: ->  # ctrl/c interrupt
 
     #
     # Create a new console
@@ -74,90 +66,91 @@ do ($ = jQuery, window, document) ->
     constructor: ($container, $options) ->
 
       $this = @
-      $this.history = []
-      $options = $.extend(@default, $options)
-      $auto = if $options.autofocus then 'autofocus' else ''
+      @history = []
+      @options = $options = $.extend(@default, $options)
       #
       # render the ui
       #
+
       $container.html """
-          <output></output>
-          <div id="input-line" class="input-line">
-          <div class="prompt"></div><div><input class="cmdline" #{$auto} /></div>
-          </div>
+          <span class="output"></span>
+          <span class="enter">
+          <span class="prompt"></span><span contenteditable class="input"></span>
+          </span>
         """
-      @output = $container.find('output')
-      @prompt = $container.find('#input-line .prompt')
-      @input = $container.find('#input-line .cmdline')
+      @output = $container.find('.output')
+      @prompt = $container.find('span .prompt')
+      @kb = $container.find('span .input')
+      @kb.focus() if $options.autofocus
 
       @prompt.text $options.prompt
-      @print "<div>#{$options.welcome}</div>"
+      @print "<div>#{$options.welcomeMessage}</div>"
 
       #
       # pass the focus to input
       #
-      $(window).on 'click', ($e) ->
-        $this.input.focus()
+      $(window).on 'click', ($e) =>
+        @kb.focus()
 
       #
       # check for interrupt
       #
-      $(document.body).on 'keydown', ($e) ->
+      $(document.body).on 'keydown', ($e) =>
         if $e.keyCode is KEY_ESC 
           $e.stopPropagation()
           $e.preventDefault()
 
       #
-      # input onclick
+      # kb onclick
       #
-      @input.on 'click', ($e) ->
-        @value = @value # Sets cursor to end of input.
+      @kb.on 'click', ($e) =>
+        @kb.text @kb.text() # Sets cursor to end of input.
 
       #
       # history (up/down)
       #
-      @input.on 'keyup', ($e) ->
+      @kb.on 'keyup', ($e) =>
 
         return unless $options.history
         $temp = 0
 
-        if $this.history.length
+        if @history.length
           if $e.keyCode is KEY_UP or $e.keyCode is KEY_DOWN
-            if $this.history[$this.histpos]
-              $this.history[$this.histpos] = @value
+            if @history[@histpos]
+              @history[@histpos] = @kb.text()
             else
-              $temp = @value
+              $temp = @kb.text()
 
           if $e.keyCode is KEY_UP
-            $this.histpos--
-            if $this.histpos < 0
-              $this.histpos = 0
+            @histpos--
+            if @histpos < 0
+              @histpos = 0
 
           else if $e.keyCode is KEY_DOWN
-            $this.histpos++
-            if $this.histpos > $this.history.length
-              $this.histpos = $this.history.length
+            @histpos++
+            if @histpos > @history.length
+              @histpos = @history.length
 
           if $e.keyCode is KEY_UP or $e.keyCode is KEY_DOWN
-            @value = if $this.history[$this.histpos] then $this.history[$this.histpos] else $temp
-            @value = @value # Sets cursor to end of input.
+            @kb.text(if @history[@histpos] then @history[@histpos] else $temp)
+            @kb.text @kb.text() # Sets cursor to end of input.
 
 
       #
       # ctrl/key
       #
-      @input.on 'keydown',  ($e) ->
+      @kb.on 'keydown', ($e) =>
 
         if ($e.ctrlKey or $e.metaKey)
           switch $e.keyCode
 
             when KEY_C  # CTRL/C - break
-              $options.break @
+              $options.cancelHandle()
               $e.preventDefault()
               $e.stopPropagation()
 
             when KEY_R  # CTRL/R - reset
-              $this.clear @
+              @clear()
               $e.preventDefault()
               $e.stopPropagation()
 
@@ -169,45 +162,38 @@ do ($ = jQuery, window, document) ->
       #
       # Enter
       #
-      @input.on 'keydown', ($e) ->
+      @kb.on 'keydown', ($e) =>
 
         switch $e.keyCode
 
           when KEY_BS
-            return if not @value
+            return if not @kb.text()
 
           when KEY_TAB
             $e.preventDefault
 
           when KEY_CR
-            if @value
-              $this.history[$this.history.length] = @value
-              $this.histpos = $this.history.length
+            if @kb.text()
+              @history[@history.length] = @kb.text()
+              @histpos = @history.length
 
             # Duplicate current input and append to output section.
-            $line = @parentNode.parentNode.cloneNode(true)
-            $line.removeAttribute 'id'
-            $line.classList.add 'line'
-            $input = $line.querySelector('input.cmdline')
-            $input.autofocus = false
-            $input.readOnly = true
-            $this.output.append $line
+            @output.append @kb.text()+"<br />"
+            @kb.get(0).scrollIntoView()
 
-            if (@value and @value.trim())
-              $options.handle @value
-            @value = '' # Clear/setup line for next input.
+            if (@kb.text() and @kb.text().trim())
+              $options.commandHandle @kb.text()
+            @kb.text('') # Clear/setup line for next input.
 
 
 
     #
     # Clear the console
     #
-    # @param  [String]  html string
     # @return [Void]
     #
-    clear: ($input) ->
+    clear: () ->
       @output.html ''
-      $input.value = ''
 
     #
     # Set the console prompt
@@ -215,11 +201,8 @@ do ($ = jQuery, window, document) ->
     # @param  [Number]  prompt selector
     # @return [Void]
     #
-    prompt: ($prompt=0) ->
-      if $prompt is 0
-        @prompt.text $options.prompt
-      else
-        @prompt.text $options.promptAlt
+    setPrompt: ($prompt=false) ->
+      @prompt.text if $prompt then @options.promptAlt else @options.prompt
 
     #
     # Print string to output
@@ -229,7 +212,7 @@ do ($ = jQuery, window, document) ->
     #
     print: ($text='') ->
       @output.append fix($text)
-      @input.get(0).scrollIntoView()
+      @kb.get(0).scrollIntoView()
 
     #
     # Print string to output
@@ -238,10 +221,13 @@ do ($ = jQuery, window, document) ->
     # @return [Void]
     #
     println: ($text='') ->
-      @print "#{$text}\n"
+      @output.append fix("#{$text}\n")
+      @kb.get(0).scrollIntoView()
 
     debug: ($text) ->
-      @println "<span style=\"color: blue;\">#{$text}</span>"
+      @output.append "<span style=\"color: blue;\">"+fix("#{$text}\n")+"</span>"
+      @kb.get(0).scrollIntoView()
 
     highlight: ($text) ->
-      @println "<span style=\"color: yellow;\">#{$text}</span>"
+      @output.append "<span style=\"color: yellow;\">"+fix("#{$text}\n")+"</span>"
+      @kb.get(0).scrollIntoView()
